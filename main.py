@@ -17,10 +17,13 @@ background = pygame.image.load("background_day.png")
 mixer.music.load('100116happybgm.ogg')
 mixer.music.play(-1)
 
+
+
 # Title
 pygame.display.set_caption("It's Raining Cats and Dogs")
 
 # Score and lives
+high_score = 0
 score_value = 0
 lives = 9
 font = pygame.font.Font('freesansbold.ttf', 20)
@@ -32,10 +35,7 @@ playerImg = pygame.image.load("character_femalePerson_show_bigger.png")
 playerX = 370
 playerY = 400
 playerX_change = 0
-speed = 6
-
-# Poop that sticks
-yuck_image = pygame.image.load("mud.png")
+speed = 4
 
 # Falling Objects
 objectImg = []
@@ -51,8 +51,7 @@ for i in range(num_of_cats):
     objectImg.append(pygame.image.load("kitty.png"))
     objectX.append(random.randint(0, 736))
     objectY.append(random.randint(0, 25))
-    objectY_change.append(0.3)
-    #objectImg.append(pygame.image.load("kitty.png"))
+    objectY_change.append(0.2)
 
 
 # Falling Objects
@@ -69,7 +68,7 @@ for i in range(num_of_dogs):
     objectDogImg.append(pygame.image.load("Untitled-Artwork(3).png"))
     objectDogX.append(random.randint(0, 736))
     objectDogY.append(random.randint(0, 25))
-    objectDogY_change.append(0.3)
+    objectDogY_change.append(0.2)
 
 
 # Falling Objects
@@ -86,7 +85,7 @@ for i in range(num_of_Poop):
     objectPoopImg.append(pygame.image.load("poop.png"))
     objectPoopX.append(random.randint(0, 736))
     objectPoopY.append(random.randint(0, 25))
-    objectPoopY_change.append(0.5)
+    objectPoopY_change.append(0.3)
 
 
 
@@ -108,10 +107,10 @@ def object_Dog(x, y):
 def object_Poop(x, y):
     screen.blit(objectPoopImg[i], (x, y))
 
-def yuck(x, y):
-    screen.blit(yuck_image, (x, y))
+
 def player(x, y):
     screen.blit(playerImg, (x, y))
+
 
 def collision(playerX, playerY, objectX, objectY):
     distance = math.sqrt((math.pow(playerX - objectX, 2)) + (math.pow(playerY - objectY, 2)))
@@ -120,116 +119,197 @@ def collision(playerX, playerY, objectX, objectY):
     else:
         return False
 
+
+def show_high(x,y):
+    high = font.render("High Score:" + str(high_score), True, (50, 50, 50))
+    screen.blit(high, (x, y))
+
+
 def show_score(x, y):
     score = font.render("Score:" + str(score_value), True, (50, 50, 50))
     lives_amount = font.render("Lives =" + str(lives), True, (50, 50, 50))
-    screen.blit(score, (x, y))
-    screen.blit(lives_amount, (x, y +30))
+    screen.blit(score, (x, y + 30))
+    screen.blit(lives_amount, (x, y + 60))
 
 
+# Load the high score from a file
+try:
+    with open('high_score.txt', 'r') as file:
+        high_score = int(file.read())
+except FileNotFoundError:
+    # Handle the case when the file doesn't exist yet
+    pass
 
-# Game Loop, keep game window open
-running = True
-while running:
-    screen.fill((2, 2, 2))
-    screen.blit(background, (0, 0))
+# Main game loop
+while True:  # This is the outer loop for restarting the game
+    score_value = 0
+    lives = 9
+    speed = 4
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            quit()
+    # Game Loop, keep game window open
+    running = True
+    while running:
 
+        screen.fill((2, 2, 2))
+        screen.blit(background, (0, 0))
 
-    if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_LEFT:
-            playerX_change = - speed
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+                quit()
 
-        if event.key == pygame.K_RIGHT:
-            playerX_change = speed
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                playerX_change = - speed
 
-    if event.type == pygame.KEYUP:
-        if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-            playerX_change = 0
+            if event.key == pygame.K_RIGHT:
+                playerX_change = speed
 
-    playerX += playerX_change
-    if playerX <= -10:
-        playerX = -10
-    elif playerX >= 680:
-        playerX = 680
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                playerX_change = 0
 
-    for i in range(num_of_cats):
-        objectY[i] += objectY_change[i]
+        playerX += playerX_change
+        if playerX <= -10:
+            playerX = -10
+        elif playerX >= 680:
+            playerX = 680
 
-        if objectY[i] > 600:
-            objectY[i] = random.randint(0, 25)
-            objectX[i] = random.randint(0, 736)
-            lives -= 1
+        for i in range(num_of_cats):
+            objectY[i] += objectY_change[i]
 
-        elif lives <= 0:
-            lives = 0
-            game_over()
-            break
+            if objectY[i] > 600:
+                objectY[i] = random.randint(0, 25)
+                objectX[i] = random.randint(0, 736)
+                lives -= 1
 
-    for i in range(num_of_dogs):
-        objectDogY[i] += objectDogY_change[i]
+            elif lives <= 0:
+                lives = 0
+                game_over()
 
-        if objectDogY[i] > 600:
-            objectDogY[i] = random.randint(0, 25)
-            objectDogX[i] = random.randint(0, 736)
-            lives -= 1
+                # Compare score to high score
+                if score_value > high_score:
+                    high_score = score_value
 
-        elif lives <= 0:
-            lives = 0
-            game_over()
-            break
+                # Save the high score
+                with open('high_score.txt', 'w') as file:
+                    file.write(str(high_score))
 
-    for i in range(num_of_Poop):
-        objectPoopY[i] += objectPoopY_change[i]
+                # Show "Would you like to play again?" prompt
+                prompt_text = font.render("Would you like to play again? (Y/N)", True, (255, 255, 255))
+                screen.blit(prompt_text, (250, 350))
 
-        if objectPoopY[i] > 600:
-            objectPoopY[i] = random.randint(0, 25)
-            objectPoopX[i] = random.randint(0, 736)
+                pygame.display.update()
 
-        elif lives <= 0:
-            lives = 0
-            game_over()
+                # Wait for player input
+                waiting_for_input = True
+                while waiting_for_input:
+                    for event in pygame.event.get():
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_y:
+                                # If 'Y' is pressed, reset the game and continue
+                                pygame.time.delay(1000)  # Delay for 1000 milliseconds (1 second)
+                                score_value = 0
+                                lives = 9
+                                speed = 4
+                                for i in range(num_of_cats):
+                                    objectY_change[i] = 0.2
+                                for i in range(num_of_dogs):
+                                    objectDogY_change[i] = 0.2
+                                waiting_for_input = False
+                            elif event.key == pygame.K_n:
+                                # If 'N' is pressed, exit the game
+                                pygame.quit()
 
-            break
+        for i in range(num_of_dogs):
+            objectDogY[i] += objectDogY_change[i]
 
+            if objectDogY[i] > 600:
+                objectDogY[i] = random.randint(0, 25)
+                objectDogX[i] = random.randint(0, 736)
+                lives -= 1
 
-        catch = collision(playerX, playerY, objectX[i], objectY[i])
-        if catch:
-            hit_sound = mixer.Sound('Meow.ogg')
-            hit_sound.play()
-            score_value += 1
-            objectY[i] = random.randint(0, 25)
-            objectX[i] = random.randint(0, 736)
-            objectY_change[i] = objectY_change[i] + 0.01
+            elif lives <= 0:
+                lives = 0
+                game_over()
 
-        object_fall(objectX[i], objectY[i])
+                # Compare score to high score
+                if score_value > high_score:
+                    high_score = score_value
 
-        gotcha = collision(playerX, playerY, objectDogX[i], objectDogY[i])
-        if gotcha:
-            touch_sound = mixer.Sound('dogbark.wav')
-            touch_sound.play()
-            score_value += 1
-            objectDogY[i] = random.randint(0, 25)
-            objectDogX[i] = random.randint(0, 736)
-            objectDogY_change[i] = objectDogY_change[i] + 0.01
+                # Save the high score
+                with open('high_score.txt', 'w') as file:
+                    file.write(str(high_score))
 
-        object_Dog(objectDogX[i], objectDogY[i])
+                # Show "Would you like to play again?" prompt
+                prompt_text = font.render("Would you like to play again? (Y/N)", True, (255, 255, 255))
+                screen.blit(prompt_text, (250, 350))
 
-        ewwGross = collision(playerX, playerY, objectPoopX[i], objectPoopY[i])
-        if ewwGross:
-            splat_sound = mixer.Sound('slime_jump.wav')
-            splat_sound.play()
-            score_value -= 1
-            objectPoopY[i] = random.randint(0, 25)
-            objectPoopX[i] = random.randint(0, 736)
-            speed = speed - 0.2
+                pygame.display.update()
 
-        object_Poop(objectPoopX[i], objectPoopY[i])
+                # Wait for player input
+                waiting_for_input = True
+                while waiting_for_input:
+                    for event in pygame.event.get():
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_y:
+                                # If 'Y' is pressed, reset the game and continue
+                                pygame.time.delay(1000)  # Delay for 1000 milliseconds (1 second)
+                                score_value = 0
+                                lives = 9
+                                speed = 4
+                                for i in range(num_of_cats):
+                                    objectY_change[i] = 0.2
+                                for i in range(num_of_dogs):
+                                    objectDogY_change[i] = 0.2
+                                waiting_for_input = False
+                            elif event.key == pygame.K_n:
+                                # If 'N' is pressed, exit the game
+                                pygame.quit()
 
-    show_score(textX, textY)
-    player(playerX, playerY)
-    pygame.display.update()
+        for i in range(num_of_Poop):
+            objectPoopY[i] += objectPoopY_change[i]
+
+            if objectPoopY[i] > 600:
+                objectPoopY[i] = random.randint(0, 25)
+                objectPoopX[i] = random.randint(0, 736)
+
+            catch = collision(playerX, playerY, objectX[i], objectY[i])
+            if catch:
+                hit_sound = mixer.Sound('Meow.ogg')
+                hit_sound.play()
+                score_value += 1
+                objectY[i] = random.randint(0, 25)
+                objectX[i] = random.randint(0, 736)
+                objectY_change[i] = objectY_change[i] + 0.02
+
+            object_fall(objectX[i], objectY[i])
+
+            gotcha = collision(playerX, playerY, objectDogX[i], objectDogY[i])
+            if gotcha:
+                touch_sound = mixer.Sound('dogbark.wav')
+                touch_sound.play()
+                score_value += 1
+                objectDogY[i] = random.randint(0, 25)
+                objectDogX[i] = random.randint(0, 736)
+                objectDogY_change[i] = objectDogY_change[i] + 0.02
+
+            object_Dog(objectDogX[i], objectDogY[i])
+
+            ewwGross = collision(playerX, playerY, objectPoopX[i], objectPoopY[i])
+            if ewwGross:
+                splat_sound = mixer.Sound('slime_jump.wav')
+                splat_sound.play()
+                objectPoopY[i] = random.randint(0, 25)
+                objectPoopX[i] = random.randint(0, 736)
+                speed = speed - 0.05
+
+            object_Poop(objectPoopX[i], objectPoopY[i])
+
+        show_high(textY,textY)
+        show_score(textX, textY)
+        player(playerX, playerY)
+        pygame.display.update()
+
+    pygame.quit()
