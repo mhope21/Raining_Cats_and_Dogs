@@ -173,8 +173,8 @@ while True:  # This is the outer loop for restarting the game
         playerX += playerX_change
         if playerX <= -10:
             playerX = -10
-        elif playerX >= 680:
-            playerX = 680
+        elif playerX >= 705:
+            playerX = 705
 
         for i in range(num_of_cats):
             objectY[i] += objectY_change[i]
@@ -303,7 +303,8 @@ while True:  # This is the outer loop for restarting the game
                 splat_sound.play()
                 objectPoopY[i] = random.randint(0, 25)
                 objectPoopX[i] = random.randint(0, 736)
-                speed = speed - 0.05
+                if speed > 0:
+                    speed = speed - 0.2
 
             object_Poop(objectPoopX[i], objectPoopY[i])
 
